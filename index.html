@@ -15,7 +15,7 @@
 
 <script type="text/javascript">
 
-var game = new Phaser.Game(480, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update});
+var game = new Phaser.Game(480, 800, Phaser.CANVAS, '', { preload: preload, create: create, update: update});
 
 function preload() {
 	//LOADING HUD
@@ -27,6 +27,7 @@ function preload() {
 	game.load.bitmapFont('font', 'assets/obelix.png', 'assets/obelix.fnt');
 	game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 	game.scale.refresh();
+
     //game.scale.setMinMax(240, 400, 1080, 1800);
 	player_preload(); //загружаем все assets игрока
 	block_preload();
