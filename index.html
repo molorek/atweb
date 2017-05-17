@@ -1,0 +1,359 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Agile Triangle</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script type="text/javascript" src="classes/player21.js"></script>
+	<script type="text/javascript" src="classes/block21.js"></script>
+	<script type="text/javascript" src="classes/coin21.js"></script>
+    <style type="text/css">
+		canvas {   display : block;   margin : auto;}
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(480, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update});
+
+function preload() {
+	//LOADING HUD
+	game.load.image('hud_1','assets/hud_1.png');
+	game.load.image('hud_2','assets/hud_2.png');
+	game.load.image('ice_1','assets/ice_spr_main.png');
+	game.load.image('ice_2','assets/ice_spr_second.png');
+	game.load.image('wall','assets/wall.png');
+	game.load.bitmapFont('font', 'assets/obelix.png', 'assets/obelix.fnt');
+	game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+	game.scale.refresh();
+    //game.scale.setMinMax(240, 400, 1080, 1800);
+	player_preload(); //загружаем все assets игрока
+	block_preload();
+	coin_preload();
+}
+
+function create() {
+
+	game.world.setBounds(0, 0, 480, 1800);
+	//группы
+	wall_group = game.add.group(); //глубина спрайтов	
+	coin_group = game.add.group(); //глубина спрайтов	
+	depth_group = game.add.group(); //глубина спрайтов	
+	player_group = game.add.group(); //глубина спрайтов	
+	eff_group = game.add.group(); //глубина спрайтов	
+	hud_group = game.add.group(); //глубина спрайтов	
+	above_eff_group = game.add.group(); //глубина спрайтов	
+	
+	//счет и монеты
+	pre_score=-1;
+	pre_coins=-1;
+	score=0;
+	coins=0;
+	
+	//ice effect
+	ice_spr=above_eff_group.create(0,400,'ice_1'); //640
+	ice_spr.width=480;
+	ice_spr.height=800;
+	ice_spr.anchor.y=.5;
+	ice_spr.alpha=0;
+	ice_spr.fixedToCamera = true;
+	
+	ice_spr2=above_eff_group.create(0,400,'ice_2'); //640
+	ice_spr2.width=480;
+	ice_spr2.height=800;
+	ice_spr2.anchor.y=.5;
+	ice_spr2.alpha=0;
+	ice_spr2.fixedToCamera = true;
+
+	//DRAW HUD
+	hud_spr=hud_group.create(0,640,'hud_1'); //640
+	hud_spr.width=480;
+	hud_spr.height=160;
+	hud_spr.z=10
+	hud_spr.fixedToCamera = true;
+	
+	hud_ic_spr=hud_group.create(0,640,'hud_2'); //640
+	hud_ic_spr.width=480;
+	hud_ic_spr.height=160;
+	hud_ic_spr.z=11
+	hud_ic_spr.fixedToCamera = true;
+
+	//SCORE+COINS
+    score_Text = game.add.bitmapText(33+85, 664, 'font', ""+score, 60);
+	score_Text.z=15;
+	score_Text.anchor.x = .5;
+	score_Text.fixedToCamera = true;
+	hud_group.create(score_Text);
+
+    coins_Text = game.add.bitmapText(308+30+25, 664, 'font', ""+coins, 60);
+	coins_Text.z=15;
+	coins_Text.anchor.x = .5;
+	coins_Text.fixedToCamera = true;
+	coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
+	hud_group.create(coins_Text);
+	//EFFECTS
+	temp_score_Text = game.add.bitmapText(33+85, 696, 'font', ""+pre_score, 60);
+	temp_score_Text.z=16;
+	temp_score_Text.alpha=0;
+	temp_score_Text.scale=new Phaser.Point(0,0);
+	temp_score_Text.anchor.x = .5;
+	temp_score_Text.anchor.y = .5;
+	temp_score_Text.fixedToCamera = true;
+	hud_group.create(temp_score_Text);
+
+    temp_coins_Text = game.add.bitmapText(308+30+25, 696, 'font', ""+pre_coins, 60);
+	temp_coins_Text.z=16;
+	temp_coins_Text.alpha=0;
+	temp_coins_Text.scale=new Phaser.Point(0,0);
+	temp_coins_Text.anchor.x = .5;
+	temp_coins_Text.anchor.y = .5;
+	temp_coins_Text.fixedToCamera = true;
+	temp_coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
+	hud_group.create(temp_coins_Text);
+	
+	//переменные для генерации стенок
+	wall_y=1568;
+	wall_x=268;
+	wall_timer=0;
+	
+	//скорость игры
+	block_spd=1;
+	block_anim_spd=1;
+	player_spd=.8;
+	game_spd_score=0;
+
+	//переменные
+	game_session_started=0;
+	coin_timer=10;
+	block_y=776-8;
+	
+	//ice 
+	ice=0;
+	ice_block_spd=0;
+	ice_timer=0;
+	first_frame_ice=0;
+	var graphics = game.add.graphics(480, 800);
+	graphics.lineStyle(2, 0x0000FF, 1);
+	ice_rect = graphics.drawRect(0, 0, 480, 800);
+	ice_rect.fixedToCamera = true;
+
+	//цвет заднего фона
+	game.stage.backgroundColor = "#4488AA";
+	
+	temp_br=Phaser.Color.getRed(game.stage.backgroundColor);
+	temp_bg=Phaser.Color.getGreen(game.stage.backgroundColor);
+	temp_bb=Phaser.Color.getBlue(game.stage.backgroundColor);
+	t_r=temp_br, t_g=temp_bg, t_b=temp_bb;
+	//вызываем начальные ф-ции
+	create_walls();
+	player_create(); //создаем игрока =)
+	create_blocks();
+	depth_group.sort();
+	
+}
+
+function update() {
+	depth_group.sort('z', Phaser.Group.SORT_ASCENDING); //управление "слоями"
+	coin_group.sort('z', Phaser.Group.SORT_ASCENDING); //управление "слоями"
+	hud_group.sort('z', Phaser.Group.SORT_ASCENDING); //управление "слоями"
+
+	player_update();
+	
+	if (coin_timer<=0){
+		create_coin();
+	}
+	
+	if (wall_timer<=0){
+		move_downwards(); //имитация бесконечности игрового мира
+	}
+
+	if (!player_dead){
+		if (game_spd_score>20){
+			block_spd+=.2;
+			block_anim_spd+=.025;
+			player_spd+=.1;
+			game_spd_score=0;
+			choose_background_color();
+		}
+	}else{
+		if (player_dead_timer<=0){
+			block_spd+=(0-block_spd)*.075;
+			block_anim_spd+=(0-block_anim_spd)*.075;
+		}
+	}
+
+	upd_hud();
+	colorize_background(t_r,t_g,t_b);
+	
+	//ICE COIN EFFECT
+	if (ice){
+		ice_spr.alpha+=(1-ice_spr.alpha)*.1
+		ice_spr2.alpha=(ice_timer/600);
+		ice_spr.y=triangle.y;
+		freeze_effect();
+	}else{
+		ice_spr.alpha+=(0-ice_spr.alpha)*.1
+		ice_spr2.alpha=0;
+	}
+}
+
+function upd_hud(){
+	//UPDATE HUD
+	score_Text.setText(""+score);
+	coins_Text.setText(""+coins);
+	temp_score_Text.setText(""+pre_score);
+	temp_coins_Text.setText(""+pre_coins);
+	
+	if (temp_score_Text.alpha>0){
+		temp_score_Text.scale.x+=(3-temp_score_Text.scale.x)*.1;
+		temp_score_Text.scale.y+=(3-temp_score_Text.scale.y)*.1;
+		temp_score_Text.alpha+=(0-temp_score_Text.alpha)*.3;
+	}
+	
+	if (temp_coins_Text.alpha>0){
+		temp_coins_Text.scale.x+=(3-temp_coins_Text.scale.x)*.1;
+		temp_coins_Text.scale.y+=(3-temp_coins_Text.scale.y)*.1;
+		temp_coins_Text.alpha+=(0-temp_coins_Text.alpha)*.3;
+	}
+	
+}
+
+function choose_background_color(){
+	var tmp_color, choose;
+	
+	choose=game.rnd.integerInRange(1, 6)
+	
+	switch(choose){
+		case 1: t_r=226; t_g=116; t_b=125; break;
+		
+		case 2: t_r=163; t_g=215; t_b=169; break;
+		
+		case 3: t_r=145; t_g=160; t_b=213; break;
+		
+		case 4: t_r=220; t_g=181; t_b=105; break;
+		
+		case 5: t_r=172; t_g=116; t_b=204; break;
+		
+		case 6: t_r=113; t_g=210; t_b=202; break;
+	}
+}
+
+function colorize_background(r,g,b){
+	var ttr, ttb, ttg;
+	temp_br+=(r-temp_br)*.075;
+	temp_bg+=(g-temp_bg)*.075;
+	temp_bb+=(b-temp_bb)*.075;
+	
+	ttr=ComponentToHex(parseInt(temp_br));
+	ttg=ComponentToHex(parseInt(temp_bg));
+	ttb=ComponentToHex(parseInt(temp_bb));
+	
+	game.stage.backgroundColor=Phaser.Color.getColor(temp_br, temp_bg, temp_bb);
+	document.body.style.background = "#" + ttr + ttg + ttb;
+	hud_spr.tint=game.stage.backgroundColor;
+}
+
+function ComponentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function move_downwards(){
+	if (wall_timer<=0){
+		
+		create_blocks();
+		game.camera.y+=384;
+		depth_group.y+=384;
+		player_group.y+=384;
+		coin_group.y+=384;
+		eff_group.y+=384;
+		
+		wall_timer=6;
+	}
+}
+
+function create_coin(){
+	if (coin_timer<=0 && wall_timer>=1){
+		var rand = game.rnd.integerInRange(1, 5), choosed;
+		switch(rand){
+		
+		case 1:
+			choosed='coin_yel';
+		break;
+		
+		case 2:
+			choosed='coin_or';
+		break;
+		
+		case 3:
+			choosed='coin_ice';
+		break;
+		
+		case 4:
+			choosed='coin_red';
+		break;
+		
+		case 5:
+			choosed='coin_viol';
+		break;
+		
+		}
+		var coin = new Coin(game, game.rnd.integerInRange(180, 300), (triangle.y-500), choosed);	//game.camera.y-64
+		coin_timer=game.rnd.integerInRange(10, 20);
+	}	
+}
+
+function create_blocks(){
+	for(var i=0;i<6;i++){
+		if (game.math.isOdd(i)){
+			var b_dir=1;
+		}else{
+			var b_dir=-1;
+		}
+		var block = new Block(game, game.rnd.integerInRange(180, 300), block_y, b_dir); // 776-(64*i)
+		block_y-=64;
+	}	
+}
+
+function create_walls(){
+		for(var i=0;i<18;i++){
+			if (game.math.isOdd(i)){
+				var w=wall_group.create(268, wall_y,'wall');
+			}else{
+				var w=wall_group.create(211, wall_y,'wall');
+			}	
+			w.width/=2.25;
+			w.height/=2.05;
+			w.anchor.x=.5;
+			w.anchor.y=.5;
+			
+			wall_y-=64;	
+			if (i==17){
+				wall_timer=6;
+			}
+		}
+}
+
+function freeze_effect(){
+	if (ice){
+		if (first_frame_ice){
+			ice_block_spd=block_spd;
+			block_spd/=2;
+			first_frame_ice=0;
+		}
+		
+		if (ice_timer>0){
+			ice_timer-=1;
+		}else{
+			block_spd=ice_block_spd;
+			ice_timer=0;
+			ice=0;
+		}
+	}
+}
+
+</script>
+
+</body>
+</html>
