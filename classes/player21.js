@@ -28,11 +28,12 @@ function player_create(){
 	game.camera.follow(triangle);
 	
 	//управление
-	var key1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+	var key1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
+		key2 =  game.input.onTap.add(player_move, this);
     key1.onDown.add(player_move, this);
 	
 	//движение
-	tr_y=0; //ограничитель движениЯ вверх
+	triangle.tr_y=0; //ограничитель движениЯ вверх
 	tr_up_times=0; //счетчик временных тапов
 	triangle.hor_dir=0; //горизонтальное направление
 	player_dead=0; //мертв ли треугольник
@@ -57,12 +58,12 @@ function player_update(){
 	
 	if (!player_dead){
 		///////////////вертикальное движение
-		if (tr_y>=0){
-			if (tr_y>0){
-				tr_y-=6.4;
+		if (triangle.tr_y>=0){
+			if (triangle.tr_y>0){
+				triangle.tr_y-=6.4;
 				triangle.y-=6.4;
 				game.camera.y-=6.4;
-				if ( tr_up_times!=0 && (tr_y<64*tr_up_times) ){
+				if ( tr_up_times!=0 && (triangle.tr_y<64*tr_up_times) ){
 					tr_up_times-=1;
 					if (triangle.hor_dir!=0){
 						triangle.hor_dir=-triangle.hor_dir;
@@ -71,9 +72,9 @@ function player_update(){
 					}
 				}
 			}
-			if (tr_y==0){
+			if (triangle.tr_y==0){
 				triangle.y=( game.math.roundTo(triangle.y/64, 0) )*64//game.math.snapTo(triangle.y, 64, 0);
-				tr_y=-1;
+				triangle.tr_y=-1;
 			}
 		}
 		///////////////горизонтальное движение
@@ -148,7 +149,7 @@ function triangle_block_death(blck_dir){
 	player_dead_fall_sp=0;
 	player_dead_timer=30;
 	triangle.hor_dir=blck_dir;
-	player_dead_hsp=6;
+	player_dead_hsp=7;
 	
 	ice=0;
 }
@@ -218,7 +219,7 @@ function player_move(){
 		if (!game_session_started){
 			game_session_started=1;
 		}
-		if (tr_y<96){
+		if (triangle.tr_y<96){
 			coin_timer-=1;
 			score+=1;
 			pre_score+=1;
@@ -227,7 +228,7 @@ function player_move(){
 			game_spd_score+=1;
 			tr_up_times+=1;
 
-			tr_y+=64;
+			triangle.tr_y+=64;
 			wall_timer-=1;
 		}
 	}

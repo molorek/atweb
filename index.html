@@ -4,6 +4,11 @@
 	<meta charset="UTF-8" />
 	<title>Agile Triangle</title>
 	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script
+		src="https://code.jquery.com/jquery-2.2.0.min.js"
+		integrity="sha256-ihAoc6M/JPfrIiIeayPE9xjin4UWjsx2mjW/rtmxLM4="
+		crossorigin="anonymous">
+	</script>
 	<script type="text/javascript" src="classes/player21.js"></script>
 	<script type="text/javascript" src="classes/block21.js"></script>
 	<script type="text/javascript" src="classes/coin21.js"></script>
@@ -15,7 +20,7 @@
 
 <script type="text/javascript">
 
-var game = new Phaser.Game(480, 800, Phaser.CANVAS, '', { preload: preload, create: create, update: update});
+var game = new Phaser.Game(480, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update});
 
 function preload() {
 	//LOADING HUD
@@ -28,7 +33,6 @@ function preload() {
 	game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 	game.scale.refresh();
 
-    //game.scale.setMinMax(240, 400, 1080, 1800);
 	player_preload(); //загружаем все assets игрока
 	block_preload();
 	coin_preload();
@@ -52,6 +56,8 @@ function create() {
 	score=0;
 	coins=0;
 	
+	// score_to_db();
+	
 	//ice effect
 	ice_spr=above_eff_group.create(0,400,'ice_1'); //640
 	ice_spr.width=480;
@@ -66,52 +72,8 @@ function create() {
 	ice_spr2.anchor.y=.5;
 	ice_spr2.alpha=0;
 	ice_spr2.fixedToCamera = true;
-
-	//DRAW HUD
-	hud_spr=hud_group.create(0,640,'hud_1'); //640
-	hud_spr.width=480;
-	hud_spr.height=160;
-	hud_spr.z=10
-	hud_spr.fixedToCamera = true;
 	
-	hud_ic_spr=hud_group.create(0,640,'hud_2'); //640
-	hud_ic_spr.width=480;
-	hud_ic_spr.height=160;
-	hud_ic_spr.z=11
-	hud_ic_spr.fixedToCamera = true;
-
-	//SCORE+COINS
-    score_Text = game.add.bitmapText(33+85, 664, 'font', ""+score, 60);
-	score_Text.z=15;
-	score_Text.anchor.x = .5;
-	score_Text.fixedToCamera = true;
-	hud_group.create(score_Text);
-
-    coins_Text = game.add.bitmapText(308+30+25, 664, 'font', ""+coins, 60);
-	coins_Text.z=15;
-	coins_Text.anchor.x = .5;
-	coins_Text.fixedToCamera = true;
-	coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
-	hud_group.create(coins_Text);
-	//EFFECTS
-	temp_score_Text = game.add.bitmapText(33+85, 696, 'font', ""+pre_score, 60);
-	temp_score_Text.z=16;
-	temp_score_Text.alpha=0;
-	temp_score_Text.scale=new Phaser.Point(0,0);
-	temp_score_Text.anchor.x = .5;
-	temp_score_Text.anchor.y = .5;
-	temp_score_Text.fixedToCamera = true;
-	hud_group.create(temp_score_Text);
-
-    temp_coins_Text = game.add.bitmapText(308+30+25, 696, 'font', ""+pre_coins, 60);
-	temp_coins_Text.z=16;
-	temp_coins_Text.alpha=0;
-	temp_coins_Text.scale=new Phaser.Point(0,0);
-	temp_coins_Text.anchor.x = .5;
-	temp_coins_Text.anchor.y = .5;
-	temp_coins_Text.fixedToCamera = true;
-	temp_coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
-	hud_group.create(temp_coins_Text);
+	initializing_hud();
 	
 	//переменные для генерации стенок
 	wall_y=1568;
@@ -197,6 +159,56 @@ function update() {
 		ice_spr.alpha+=(0-ice_spr.alpha)*.1
 		ice_spr2.alpha=0;
 	}
+}
+
+function initializing_hud(){
+
+	//DRAW HUD
+	hud_spr=hud_group.create(0,640,'hud_1'); //640
+	hud_spr.width=480;
+	hud_spr.height=160;
+	hud_spr.z=10
+	hud_spr.fixedToCamera = true;
+	
+	hud_ic_spr=hud_group.create(0,640,'hud_2'); //640
+	hud_ic_spr.width=480;
+	hud_ic_spr.height=160;
+	hud_ic_spr.z=11
+	hud_ic_spr.fixedToCamera = true;
+
+	//SCORE+COINS
+    score_Text = game.add.bitmapText(33+85, 664, 'font', ""+score, 60);
+	score_Text.z=15;
+	score_Text.anchor.x = .5;
+	score_Text.fixedToCamera = true;
+	hud_group.create(score_Text);
+
+    coins_Text = game.add.bitmapText(308+30+25, 664, 'font', ""+coins, 60);
+	coins_Text.z=15;
+	coins_Text.anchor.x = .5;
+	coins_Text.fixedToCamera = true;
+	coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
+	hud_group.create(coins_Text);
+	//EFFECTS
+	temp_score_Text = game.add.bitmapText(33+85, 696, 'font', ""+pre_score, 60);
+	temp_score_Text.z=16;
+	temp_score_Text.alpha=0;
+	temp_score_Text.scale=new Phaser.Point(0,0);
+	temp_score_Text.anchor.x = .5;
+	temp_score_Text.anchor.y = .5;
+	temp_score_Text.fixedToCamera = true;
+	hud_group.create(temp_score_Text);
+
+    temp_coins_Text = game.add.bitmapText(308+30+25, 696, 'font', ""+pre_coins, 60);
+	temp_coins_Text.z=16;
+	temp_coins_Text.alpha=0;
+	temp_coins_Text.scale=new Phaser.Point(0,0);
+	temp_coins_Text.anchor.x = .5;
+	temp_coins_Text.anchor.y = .5;
+	temp_coins_Text.fixedToCamera = true;
+	temp_coins_Text.tint=Phaser.Color.getColor(255, 255, 102);
+	hud_group.create(temp_coins_Text);
+
 }
 
 function upd_hud(){
@@ -352,6 +364,25 @@ function freeze_effect(){
 			ice=0;
 		}
 	}
+}
+
+function score_to_db(){
+	var data="&count="+score;
+
+    var request = new XMLHttpRequest();
+    request.open('POST', '/senddata.php', true);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+    request.onload = function() {
+      if (request.status >= 200 && request.status < 400){
+        // Success!
+        // here you could go to the leaderboard or restart your game .
+		console.log("success");
+      } else {
+        // We reached our target server, but it returned an error
+		console.log("error");
+      }
+    };  
+    request.send(data);
 }
 
 </script>
